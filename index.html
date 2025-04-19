@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word DNA - JSON Loader</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #f0f4ff, #dbeafe);
+      text-align: center;
+      padding: 30px;
+      color: #1e3a8a;
+    }
+    .syllable {
+      display: inline-block;
+      margin: 10px;
+      padding: 15px 20px;
+      background: #e0e7ff;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .syllable:hover {
+      background: #c7d2fe;
+      transform: scale(1.05);
+    }
+    #current-word {
+      margin: 20px auto;
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 30px;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #3b82f6;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    #feedback {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #334155;
+    }
+    #scoreboard {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #word-history {
+      margin-top: 30px;
+      font-size: 16px;
+      text-align: left;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <h1>🧬 Word DNA: JSON Loader Mode</h1>
+  <p>Use the syllables to reconstruct hidden words!</p>
+
+  <div id="syllables"></div>
+  <div id="current-word"></div>
+  <button onclick="submitWord()">Submit</button>
+  <button onclick="resetWord()">Reset</button>
+
+  <div id="scoreboard">Found: <span id="score">0</span>/5</div>
+  <div id="feedback"></div>
+
+  <div id="word-history">
+    <h3>Correct Words:</h3>
+    <ul id="history-list"></ul>
+  </div>
+
+  <script>
+    let targetWords = [];
+    let wordToSyllables = {};
+    let currentWord = "";
+    let score = 0;
+    let foundWords = new Set();
+
+    const syllableContainer = document.getElementById("syllables");
+    const currentWordDisplay = document.getElementById("current-word");
+    const feedback = document.getElementById("feedback");
+    const scoreDisplay = document.getElementById("score");
+    const historyList = document.getElementById("history-list");
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function generateSyllablePool() {
+      const pool = new Set();
+      for (let word of targetWords) {
+        wordToSyllables[word].forEach(syl => pool.add(syl));
+      }
+      return shuffle([...pool]);
+    }
+
+    function displaySyllables() {
+      syllableContainer.innerHTML = "";
+      const pool = generateSyllablePool();
+      pool.forEach(syl => {
+        const span = document.createElement("span");
+        span.className = "syllable";
+        span.innerText = syl;
+        span.onclick = () => {
+          currentWord += syl;
+          currentWordDisplay.innerText = currentWord;
+        };
+        syllableContainer.appendChild(span);
+      });
+    }
+
+    function submitWord() {
+      const lower = currentWord.toLowerCase();
+      if (targetWords.includes(lower) && !foundWords.has(lower)) {
+        feedback.innerText = `✅ ${currentWord} found!`;
+        foundWords.add(lower);
+        score++;
+        scoreDisplay.innerText = score;
+        const li = document.createElement("li");
+        li.innerText = currentWord;
+        historyList.appendChild(li);
+        if (score === targetWords.length) {
+          feedback.innerText = "🎉 You've found all the words!";
+        }
+      } else {
+        feedback.innerText = `❌ ${currentWord} is not a target word or already found.`;
+      }
+      resetWord();
+    }
+
+    function resetWord() {
+      currentWord = "";
+      currentWordDisplay.innerText = "";
+    }
+
+    function startGame(data) {
+      const selected = shuffle(data).slice(0, 5);
+      targetWords = selected.map(entry => entry.word);
+      wordToSyllables = {};
+      selected.forEach(entry => {
+        wordToSyllables[entry.word] = entry.syllables;
+      });
+      displaySyllables();
+    }
+
+    fetch("syllables.json")
+      .then(response => response.json())
+      .then(data => startGame(data));
+  </script>
+</body>
+</html>
