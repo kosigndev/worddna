@@ -102,8 +102,8 @@
   </style>
 </head>
 <body>
-  <h1>🧬 Word DNA</h1>
-  <p>Reconstruct hidden words using simple, readable syllables.</p>
+  <h1>WordBits</h1>
+  <p>Use the syllables below to find 5 hidden words!</p>
 
   <div id="syllables"></div>
   <div id="current-word"></div>
@@ -185,7 +185,7 @@
           feedback.innerText = "🎉 You've found all the words!";
         }
       } else {
-        feedback.innerText = `❌ ${currentWord} is not a target word or already found.`;
+        feedback.innerText = `❌ ${currentWord} Already guessed or not quite right—try again!`;
         feedback.classList.add("incorrect");
         soundIncorrect.play();
       }
