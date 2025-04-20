@@ -57,6 +57,9 @@
       transition: background-color 0.3s;
       font-family: 'OpenDyslexic', Arial, sans-serif;
     }
+    button:hover {
+      background-color: #1d4ed8;
+    }
     #feedback {
       margin-top: 20px;
       font-size: 1.2em;
@@ -87,6 +90,16 @@
       color: #dc2626;
       animation: shake 0.4s ease;
     }
+
+    body.game-over {
+      animation: flash-red 0.5s ease-in-out 2;
+    }
+
+    @keyframes flash-red {
+      0%, 100% { background-color: #fff; }
+      50% { background-color: #fee2e2; }
+    }
+
     @keyframes pop {
       0% { transform: scale(1); }
       50% { transform: scale(1.15); }
@@ -104,12 +117,12 @@
   <p>Use the syllables below to find 5 hidden words!</p>
 
   <div id="syllables"></div>
-  <div id="timer">Time Left: 2:00</div>
   <div id="current-word"></div>
-  <button id="start-btn" onclick="startGameFromButton()">Start Game</button>
-  <button id="restart-btn" onclick="restartGame()" style="display: none;">Play Again!</button>
+  <button onclick="submitWord()">Submit</button>
+  <button onclick="resetWord()">Reset</button>
 
   <div id="scoreboard">Found: <span id="score">0</span>/5</div>
+  <div id="attempts">Attempts Left: <span id="attempts-left">5</span></div>
   <div id="feedback"></div>
 
   <div id="word-history">
@@ -126,8 +139,8 @@
     let currentWord = "";
     let score = 0;
     let foundWords = new Set();
-    let timerInterval;
-    let startTime;
+    let wrongAttempts = 0;
+
 
     const syllableContainer = document.getElementById("syllables");
     const currentWordDisplay = document.getElementById("current-word");
@@ -136,10 +149,7 @@
     const historyList = document.getElementById("history-list");
     const soundCorrect = document.getElementById("sound-correct");
     const soundIncorrect = document.getElementById("sound-incorrect");
-    const timerDisplay = document.getElementById("timer");
-    const totalDuration = 120000; // 2 minutes in milliseconds
-    const startBtn = document.getElementById("start-btn");
-    const restartBtn = document.getElementById("restart-btn");
+    const maxWrongAttempts = 5;
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -193,80 +203,43 @@
         feedback.innerText = `❌ ${currentWord} Already guessed or not quite right—try again!`;
         feedback.classList.add("incorrect");
         soundIncorrect.play();
+         wrongAttempts++;
+         document.getElementById("attempts-left").innerText = maxWrongAttempts - wrongAttempts;
+         if (wrongAttempts >= maxWrongAttempts) {
+          feedback.innerText = "💥 Game Over – too many mistakes!";
+          feedback.classList.add("incorrect");
+          document.body.classList.add("game-over");
+          // Disable all syllables
+          Array.from(document.getElementsByClassName("syllable")).forEach(syl => {
+            syl.onclick = null;
+            syl.style.opacity = 0.4;
+            syl.style.cursor = "default";
+          });
+
+          // Disable buttons
+          document.querySelector("button[onclick='submitWord()']").disabled = true;
+          document.querySelector("button[onclick='resetWord()']").disabled = true;
+        }
       }
+
       resetWord();
     }
-
     function resetWord() {
       currentWord = "";
       currentWordDisplay.innerText = "";
     }
 
     function startGame(data) {
-      clearInterval(timerInterval);
-      timeLeft = 120000;
-      timerDisplay.innerText = "Time Left: 2:00.00";
-      feedback.innerText = "";
-      score = 0;
-      currentWord = "";
-      foundWords = new Set();
-      scoreDisplay.innerText = score;
-      currentWordDisplay.innerText = "";
-      historyList.innerHTML = "";
       const selected = shuffle(data).slice(0, 5);
       targetWords = selected.map(entry => entry.word);
       wordToSyllables = {};
       selected.forEach(entry => wordToSyllables[entry.word] = entry.syllables);
       displaySyllables();
-      startTimer();
-    }
-
-    function startTimer() {
-      startTime = Date.now();
-      timerInterval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(totalDuration - elapsed, 0);
-
-      const minutes = Math.floor(remaining / 60000);
-      const seconds = Math.floor((remaining % 60000) / 1000);
-      const hundredths = Math.floor((remaining % 1000) / 10);
-
-      timerDisplay.innerText = `Time Left: ${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
-      if (remaining <= 0) {
-        clearInterval(timerInterval);
-        endGame(function endGame() {
-          feedback.innerText = "⏰ Time's up! Game over.";
-          feedback.classList.add("incorrect");
-          document.querySelectorAll(".syllable").forEach(el => {
-            el.style.pointerEvents = "none";
-            el.style.opacity = "0.5";
-          });
-          restartBtn.style.display = "inline-block";
-        });
-      }
-    }, 10); // Update every 10ms
-    }
-
-    function startGameFromButton() {
-      fetch("syllables.json")
-      .then(response => response.json())
-      .then(data => {
-        startBtn.style.display = "none";
-        restartBtn.style.display = "none";
-        startGame(data);
-      });
-    }
-
-    function restartGame() {
-      startGameFromButton();
     }
 
     fetch("syllables.json")
       .then(response => response.json())
       .then(data => startGame(data));
-
-
-
   </script>
 </body>
 </html>
