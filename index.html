@@ -69,6 +69,7 @@
       margin-top: 20px;
       font-size: 1.1em;
       font-weight: bold;
+      color: #000000;
     }
     #word-history {
       margin-top: 30px;
@@ -95,6 +96,27 @@
       animation: flash-red 0.5s ease-in-out 2;
     }
 
+    #attempts {
+      margin-top: 10px;
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #1e293b;
+    }
+
+    #attempts-left {
+      padding: 4px 10px;
+      border-radius: 8px;
+      background-color: #e2e8f0;
+      color: #1e293b;
+      margin-left: 8px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .low {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+
     @keyframes flash-red {
       0%, 100% { background-color: #fff; }
       50% { background-color: #fee2e2; }
@@ -119,10 +141,10 @@
   <div id="syllables"></div>
   <div id="current-word"></div>
   <button onclick="submitWord()">Submit</button>
-  <button onclick="resetWord()">Reset</button>
+  <button onclick="resetWord()">Clear</button>
 
   <div id="scoreboard">Found: <span id="score">0</span>/5</div>
-  <div id="attempts">Attempts Left: <span id="attempts-left">5</span></div>
+  <div id="attempts">Misktakes Left: <span id="attempts-left">3</span></div>
   <div id="feedback"></div>
 
   <div id="word-history">
