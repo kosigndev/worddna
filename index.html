@@ -57,9 +57,6 @@
       transition: background-color 0.3s;
       font-family: 'OpenDyslexic', Arial, sans-serif;
     }
-    button:hover {
-      background-color: #1d4ed8;
-    }
     #feedback {
       margin-top: 20px;
       font-size: 1.2em;
@@ -109,8 +106,8 @@
   <div id="syllables"></div>
   <div id="timer">Time Left: 2:00</div>
   <div id="current-word"></div>
-  <button onclick="submitWord()">Submit</button>
-  <button onclick="resetWord()">Reset</button>
+  <button id="start-btn" onclick="startGameFromButton()">Start Game</button>
+  <button id="restart-btn" onclick="restartGame()" style="display: none;">Play Again!</button>
 
   <div id="scoreboard">Found: <span id="score">0</span>/5</div>
   <div id="feedback"></div>
@@ -141,6 +138,8 @@
     const soundIncorrect = document.getElementById("sound-incorrect");
     const timerDisplay = document.getElementById("timer");
     const totalDuration = 120000; // 2 minutes in milliseconds
+    const startBtn = document.getElementById("start-btn");
+    const restartBtn = document.getElementById("restart-btn");
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -204,11 +203,22 @@
     }
 
     function startGame(data) {
+      clearInterval(timerInterval);
+      timeLeft = 120000;
+      timerDisplay.innerText = "Time Left: 2:00.00";
+      feedback.innerText = "";
+      score = 0;
+      currentWord = "";
+      foundWords = new Set();
+      scoreDisplay.innerText = score;
+      currentWordDisplay.innerText = "";
+      historyList.innerHTML = "";
       const selected = shuffle(data).slice(0, 5);
       targetWords = selected.map(entry => entry.word);
       wordToSyllables = {};
       selected.forEach(entry => wordToSyllables[entry.word] = entry.syllables);
       displaySyllables();
+      startTimer();
     }
 
     function startTimer() {
@@ -224,15 +234,39 @@
       timerDisplay.innerText = `Time Left: ${minutes}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
       if (remaining <= 0) {
         clearInterval(timerInterval);
-        endGame();
+        endGame(function endGame() {
+          feedback.innerText = "⏰ Time's up! Game over.";
+          feedback.classList.add("incorrect");
+          document.querySelectorAll(".syllable").forEach(el => {
+            el.style.pointerEvents = "none";
+            el.style.opacity = "0.5";
+          });
+          restartBtn.style.display = "inline-block";
+        });
       }
     }, 10); // Update every 10ms
     }
 
+    function startGameFromButton() {
+      fetch("syllables.json")
+      .then(response => response.json())
+      .then(data => {
+        startBtn.style.display = "none";
+        restartBtn.style.display = "none";
+        startGame(data);
+      });
+    }
+
+    function restartGame() {
+      startGameFromButton();
+    }
 
     fetch("syllables.json")
       .then(response => response.json())
       .then(data => startGame(data));
+
+
+
   </script>
 </body>
 </html>
